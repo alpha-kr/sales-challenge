@@ -17,12 +17,15 @@ class LoginController extends Controller
     {
         $data = LoginData::from($request);
 
-        $action->execute($data);
+        $token = $action->execute($data);
 
-        if ($request->hasSession()) {
+        if ($token === null && $request->hasSession()) {
             $request->session()->regenerate();
         }
 
-        return $this->success([], 'Login successful.');
+        return $this->success(
+            $token !== null ? ['token' => $token] : [],
+            'Login successful.'
+        );
     }
 }

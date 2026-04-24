@@ -104,4 +104,91 @@ class AuthTest extends TestCase
         $response->assertUnauthorized()
             ->assertJsonPath('error.code', 'UNAUTHORIZED');
     }
+
+    // --- token login ---
+
+    public function test_login_with_type_token_returns_plain_text_token(): void
+    {
+        UserFactory::new()->create([
+            'email' => 'user@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'user@example.com',
+            'password' => 'password123',
+            'type' => 'token',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Login successful.')
+            ->assertJsonStructure(['data' => ['token']]);
+
+        $this->assertNotEmpty($response->json('data.token'));
+    }
+
+    public function test_login_with_type_session_does_not_return_token(): void
+    {
+        UserFactory::new()->create([
+            'email' => 'user@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'user@example.com',
+            'password' => 'password123',
+            'type' => 'session',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonMissing(['token']);
+    }
+
+    public function test_login_with_invalid_type_returns_422(): void
+    {
+        UserFactory::new()->create(['email' => 'user@example.com', 'password' => bcrypt('password123')]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => 'user@example.com',
+            'password' => 'password123',
+            'type' => 'cookie',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
+    public function test_token_authenticates_protected_routes(): void
+    {
+        UserFactory::new()->create([
+            'email' => 'user@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $loginResponse = $this->postJson('/api/auth/login', [
+            'email' => 'user@example.com',
+            'password' => 'password123',
+            'type' => 'token',
+        ]);
+
+        $token = $loginResponse->json('data.token');
+
+        $this->getJson('/api/auth/user', ['Authorization' => "Bearer {$token}"])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+    }
+
+    public function test_logout_revokes_token_when_authenticated_via_token(): void
+    {
+        $user = UserFactory::new()->create();
+        $newToken = $user->createToken('api');
+
+        $this->withToken($newToken->plainTextToken)->postJson('/api/auth/logout')->assertNoContent();
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $newToken->accessToken->id,
+        ]);
+    }
 }

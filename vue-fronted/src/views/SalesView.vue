@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, defineComponent, h, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { AgGridVue } from '@ag-grid-community/vue3'
+import { ModuleRegistry } from '@ag-grid-community/core'
+import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model'
+import type { ColDef } from '@ag-grid-community/core'
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-quartz.css'
 import { clientService } from '@/services/ClientService'
 import { saleService } from '@/services/SaleService'
 import type { PaginationMeta } from '@/types/api'
@@ -23,14 +29,6 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import SkeletonTable from '@/components/base/SkeletonTable.vue'
 import {
   Pagination,
@@ -43,8 +41,89 @@ import {
 } from '@/components/ui/pagination'
 import { PlusCircle, Check, ChevronsUpDown, Eye } from 'lucide-vue-next'
 
+ModuleRegistry.registerModules([ClientSideRowModelModule])
+
 const router = useRouter()
 const { handleApiError } = useValidationErrors()
+
+// --- Cell renderers ---
+
+const ItemsCellRenderer = defineComponent({
+  props: ['params'],
+  setup(props) {
+    return () =>
+      h('div', { class: 'flex items-center justify-center h-full' },
+        h(Badge, { variant: 'secondary' }, () => String(props.params.value)),
+      )
+  },
+})
+
+const ActionsCellRenderer = defineComponent({
+  props: ['params'],
+  setup(props) {
+    return () =>
+      h('div', { class: 'flex items-center h-full' },
+        h(Button, {
+          variant: 'ghost',
+          size: 'icon',
+          class: 'size-8',
+          onClick: () => router.push({ name: 'sales-show', params: { id: props.params.data?.id } }),
+        }, () => h(Eye, { class: 'size-4' })),
+      )
+  },
+})
+
+// --- Column definitions ---
+
+const columnDefs: ColDef<Sale>[] = [
+  {
+    headerName: '#',
+    field: 'daily_sequence',
+    valueFormatter: ({ value }) => `#${value}`,
+    width: 80,
+  },
+  {
+    headerName: 'Client',
+    valueGetter: ({ data }) => data?.client?.name ?? `Client #${data?.client_id}`,
+    flex: 1,
+    minWidth: 150,
+  },
+  {
+    headerName: 'Date',
+    field: 'created_at',
+    valueFormatter: ({ value }) => new Date(value).toLocaleString(),
+    flex: 1,
+    minWidth: 180,
+  },
+  {
+    headerName: 'Items',
+    valueGetter: ({ data }) => data?.details?.length ?? 0,
+    width: 90,
+    cellRenderer: ItemsCellRenderer,
+  },
+  {
+    headerName: 'Total',
+    field: 'total',
+    valueFormatter: ({ value }) => formatMoney(value),
+    width: 140,
+    type: 'rightAligned',
+  },
+  {
+    headerName: '',
+    cellRenderer: ActionsCellRenderer,
+    width: 64,
+    resizable: false,
+  },
+]
+
+const defaultColDef: ColDef = {
+  resizable: false,
+  sortable: false,
+  filter: false,
+  suppressMovable: true,
+}
+
+// --- State ---
 
 const sales = ref<Sale[]>([])
 const clients = ref<Client[]>([])
@@ -62,6 +141,8 @@ const selectedClient = computed(() =>
 )
 
 const totalRevenue = computed(() => sales.value.reduce((sum, s) => sum + Number(s.total), 0))
+
+// --- Actions ---
 
 function selectClient(client: Client): void {
   selectedClientId.value = client.id
@@ -224,59 +305,31 @@ onMounted(loadData)
         </CardContent>
       </Card>
 
-      <!-- Right: Chart + Table -->
+      <!-- Right: Table -->
       <div class="space-y-5">
-        <!-- Sales table -->
         <Card>
           <div class="px-5 py-4 border-b">
             <h3 class="font-semibold text-sm">Sales</h3>
           </div>
           <CardContent class="p-0">
-            <SkeletonTable v-if="isLoading" :cols="5" :rows="8" />
+            <SkeletonTable v-if="isLoading" :cols="6" :rows="8" />
             <div v-else-if="sales.length === 0" class="py-12 text-center text-sm text-muted-foreground">
               No sales found.
             </div>
-            <Table v-else>
-              <TableHeader>
-                <TableRow>
-                  <TableHead class="pl-5">#</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead class="text-center">Items</TableHead>
-                  <TableHead class="text-right">Total</TableHead>
-                  <TableHead class="w-12 pr-5"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow v-for="sale in sales" :key="sale.id">
-                  <TableCell class="pl-5 font-mono text-muted-foreground text-sm">
-                    #{{ sale.daily_sequence }}
-                  </TableCell>
-                  <TableCell class="font-medium">
-                    {{ sale.client?.name ?? `Client #${sale.client_id}` }}
-                  </TableCell>
-                  <TableCell class="text-sm text-muted-foreground">
-                    {{ new Date(sale.created_at).toLocaleString() }}
-                  </TableCell>
-                  <TableCell class="text-center">
-                    <Badge variant="secondary">{{ sale.details.length }}</Badge>
-                  </TableCell>
-                  <TableCell class="text-right font-mono font-semibold">
-                    {{ formatMoney(sale.total) }}
-                  </TableCell>
-                  <TableCell class="pr-5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      class="size-8"
-                      @click="router.push({ name: 'sales-show', params: { id: sale.id } })"
-                    >
-                      <Eye class="size-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <AgGridVue
+              v-else
+              class="ag-theme-quartz"
+              style="width: 100%"
+              domLayout="autoHeight"
+              :columnDefs="columnDefs"
+              :rowData="sales"
+              :defaultColDef="defaultColDef"
+              :headerHeight="40"
+              :rowHeight="48"
+              :suppressCellFocus="true"
+              :suppressMovableColumns="true"
+              :suppressColumnVirtualisation="true"
+            />
           </CardContent>
         </Card>
 
@@ -308,3 +361,27 @@ onMounted(loadData)
     </div>
   </div>
 </template>
+
+<style>
+.ag-theme-quartz {
+  --ag-background-color: var(--card);
+  --ag-header-background-color: var(--card);
+  --ag-foreground-color: var(--foreground);
+  --ag-header-foreground-color: var(--muted-foreground);
+  --ag-border-color: var(--border);
+  --ag-row-hover-color: var(--muted);
+  --ag-font-size: 14px;
+  --ag-font-family: inherit;
+  --ag-cell-horizontal-padding: 16px;
+}
+
+.ag-theme-quartz .ag-root-wrapper {
+  border: none;
+  border-radius: 0;
+}
+
+.ag-theme-quartz .ag-header-cell-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+</style>

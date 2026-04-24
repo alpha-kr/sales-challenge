@@ -1,6 +1,12 @@
-.PHONY: setup dev build test down
+.PHONY: setup dev build test down check-docker
 
-setup:
+check-docker:
+	@command -v docker >/dev/null 2>&1 || { echo "❌ Docker is not installed. See https://docs.docker.com/get-docker/"; exit 1; }
+	@docker info >/dev/null 2>&1 || { echo "❌ Docker is not running. Please start Docker Desktop or the Docker daemon."; exit 1; }
+	@docker compose version >/dev/null 2>&1 || { echo "❌ Docker Compose plugin not found. See https://docs.docker.com/compose/install/"; exit 1; }
+	@echo "✅ Docker and Docker Compose are ready."
+
+setup: check-docker
 	@echo "→ Copying .env files..."
 	@cp -n laravel-backend/.env.example laravel-backend/.env 2>/dev/null && echo "  Created laravel-backend/.env" || echo "  laravel-backend/.env already exists"
 	@echo "→ Starting containers (waiting for healthy)..."
@@ -12,7 +18,7 @@ setup:
 	@echo ""
 	@echo "✅ Setup complete. Run 'make dev' to start developing."
 
-dev:
+dev: check-docker
 	@echo "→ Starting containers..."
 	WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose --env-file laravel-backend/.env up -d
 	@echo "→ Starting Vite dev server (HMR on http://localhost:5173)..."
