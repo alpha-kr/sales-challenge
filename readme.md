@@ -109,7 +109,7 @@ A sales management single-page application (SPA). Staff can register sales linki
 | `make dev` | Start containers and launch the Vite dev server with HMR |
 | `make build` | Build the frontend for production |
 | `make test` | Run the PHPUnit test suite |
-| `make down` | Stop and remove all containers |
+| `make stop` | Stop all containers |
 
 ## Accessing the Application
 

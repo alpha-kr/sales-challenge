@@ -16,7 +16,12 @@ setup: check-docker
 	@echo "→ Installing frontend dependencies..."
 	docker compose --env-file laravel-backend/.env exec sales.challenge bash -c "cd /var/www/frontend && npm install"
 	@echo ""
-	@echo "✅ Setup complete. Run 'make dev' to start developing."
+	@echo "✅ Setup complete. Run 'make dev' to start developing and login."
+	@echo ""
+	@echo "  App URL  →  http://localhost:5173"
+	@echo "  Email    →  user@example.com"
+	@echo "  Password →  password"
+	@echo ""
 
 dev: check-docker
 	@echo "→ Starting containers..."
@@ -30,7 +35,7 @@ build:
 	docker compose exec sales.challenge bash -c "cd /var/www/frontend && npm run build"
 
 test:
-	docker compose exec sales.challenge bash -c "cd /var/www/html && php artisan test --compact"
+	WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose --env-file laravel-backend/.env exec sales.challenge bash -c "cd /var/www/html && php artisan test --compact"
 
-down:
-	docker compose down
+stop:
+	WWWUSER=$$(id -u) WWWGROUP=$$(id -g) docker compose  --env-file laravel-backend/.env stop
