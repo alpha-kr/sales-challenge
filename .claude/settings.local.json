@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(vendor/bin/pint *)",
+      "Bash(sail artisan *)",
+      "Bash(npm install *)",
+      "Bash(npm view *)",
+      "Bash(npm run *)",
+      "Bash(npx shadcn-vue@latest init --defaults)",
+      "Bash(npx shadcn-vue@latest add button input dialog badge toast skeleton table card label select separator avatar sheet)",
+      "Bash(npx shadcn-vue@latest add button input dialog badge sonner skeleton table card label select separator avatar sheet)",
+      "Bash(npx vue-tsc *)",
+      "Bash(xargs cat *)",
+      "Bash(npx shadcn-vue@latest add combobox popover command)",
+      "Bash(php *)",
+      "Bash(node *)",
+      "Bash(npx shadcn-vue@latest *)",
+      "Bash(./vendor/bin/sail artisan *)",
+      "Bash(./vendor/bin/pint *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
+}
