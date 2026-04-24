@@ -5,7 +5,8 @@ services:
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        image: sail-8.5/app
+        image: sales-challenge-app
+        pull_policy: build
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:

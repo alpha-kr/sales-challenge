@@ -41,7 +41,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { PlusCircle, Check, ChevronsUpDown } from 'lucide-vue-next'
+import { PlusCircle, Check, ChevronsUpDown, Eye } from 'lucide-vue-next'
 
 const router = useRouter()
 const { handleApiError } = useValidationErrors()
@@ -243,7 +243,8 @@ onMounted(loadData)
                   <TableHead>Client</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead class="text-center">Items</TableHead>
-                  <TableHead class="text-right pr-5">Total</TableHead>
+                  <TableHead class="text-right">Total</TableHead>
+                  <TableHead class="w-12 pr-5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,8 +261,18 @@ onMounted(loadData)
                   <TableCell class="text-center">
                     <Badge variant="secondary">{{ sale.details.length }}</Badge>
                   </TableCell>
-                  <TableCell class="text-right pr-5 font-mono font-semibold">
+                  <TableCell class="text-right font-mono font-semibold">
                     {{ formatMoney(sale.total) }}
+                  </TableCell>
+                  <TableCell class="pr-5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      class="size-8"
+                      @click="router.push({ name: 'sales-show', params: { id: sale.id } })"
+                    >
+                      <Eye class="size-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               </TableBody>

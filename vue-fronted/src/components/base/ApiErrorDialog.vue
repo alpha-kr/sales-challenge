@@ -10,25 +10,28 @@ import {
 import { Button } from '@/components/ui/button'
 
 defineProps<{
-  open: boolean
-  message: string
-  details: Record<string, string[]>
+  errorDialog: {
+    open: boolean
+    code: string
+    message: string
+    details: Record<string, string[]>
+  }
 }>()
 
 const emit = defineEmits<{ close: [] }>()
 </script>
 
 <template>
-  <Dialog :open="open" @update:open="(val) => { if (!val) emit('close') }">
+  <Dialog :open="errorDialog.open" @update:open="(val: boolean) => { if (!val) emit('close') }">
     <DialogContent class="max-w-sm">
       <DialogHeader>
-        <DialogTitle class="text-destructive">Error</DialogTitle>
-        <DialogDescription>{{ message }}</DialogDescription>
+        <DialogTitle class="text-destructive">ERROR: {{ errorDialog.code }}</DialogTitle>
+        <DialogDescription>{{ errorDialog.message }}</DialogDescription>
       </DialogHeader>
 
-      <ul v-if="Object.keys(details).length > 0" class="space-y-1.5 text-sm">
+      <ul v-if="Object.keys(errorDialog.details).length > 0" class="space-y-1.5 text-sm">
         <li
-          v-for="(errors, field) in details"
+          v-for="(errors, field) in errorDialog.details"
           :key="field"
           class="flex gap-1.5"
         >

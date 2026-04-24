@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Database\Factories\ClientFactory;
 use Database\Factories\ProductFactory;
+use Database\Factories\SaleDetailFactory;
 use Database\Factories\SaleFactory;
 use Database\Factories\ServiceFactory;
 use Database\Factories\UserFactory;
@@ -276,5 +277,75 @@ class SaleTest extends TestCase
         $response->assertUnprocessable()
             ->assertJsonPath('success', false)
             ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
+    // --- show ---
+
+    public function test_show_requires_authentication(): void
+    {
+        $sale = SaleFactory::new()->create();
+
+        $this->getJson("/api/sales/{$sale->id}")
+            ->assertUnauthorized()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('error.code', 'UNAUTHORIZED');
+    }
+
+    public function test_show_returns_404_for_nonexistent_sale(): void
+    {
+        $this->actingAsUser()
+            ->getJson('/api/sales/999999')
+            ->assertNotFound();
+    }
+
+    public function test_show_returns_sale_with_product_detail_names_and_subtotal(): void
+    {
+        $client = ClientFactory::new()->create();
+        $product = ProductFactory::new()->create(['price' => 25.00]);
+        $sale = SaleFactory::new()->for($client)->create(['daily_sequence' => 2]);
+        SaleDetailFactory::new()->for($sale)->for($product)->create([
+            'quantity' => 3,
+            'unit_price' => 25.00,
+        ]);
+
+        $response = $this->actingAsUser()->getJson("/api/sales/{$sale->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Sale retrieved successfully.')
+            ->assertJsonPath('data.id', $sale->id)
+            ->assertJsonPath('data.daily_sequence', 2)
+            ->assertJsonPath('data.client.name', $client->name)
+            ->assertJsonStructure([
+                'data' => [
+                    'id', 'client_id', 'client', 'daily_sequence', 'total', 'created_at',
+                    'details' => [
+                        '*' => ['id', 'product_id', 'service_id', 'product_name', 'service_name', 'quantity', 'unit_price', 'subtotal'],
+                    ],
+                ],
+            ])
+            ->assertJsonPath('data.details.0.product_name', $product->name)
+            ->assertJsonPath('data.details.0.service_name', null)
+            ->assertJsonPath('data.details.0.subtotal', 75);
+    }
+
+    public function test_show_returns_sale_with_service_detail_names(): void
+    {
+        $client = ClientFactory::new()->create();
+        $service = ServiceFactory::new()->create(['price' => 40.00]);
+        $sale = SaleFactory::new()->for($client)->create(['daily_sequence' => 1]);
+        SaleDetailFactory::new()->for($sale)->create([
+            'product_id' => null,
+            'service_id' => $service->id,
+            'quantity' => 1,
+            'unit_price' => 40.00,
+        ]);
+
+        $response = $this->actingAsUser()->getJson("/api/sales/{$sale->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.details.0.service_name', $service->name)
+            ->assertJsonPath('data.details.0.product_name', null)
+            ->assertJsonPath('data.details.0.subtotal', 40);
     }
 }

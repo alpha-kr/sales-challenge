@@ -24,4 +24,5 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('sales', [SaleController::class, 'index']);
     Route::post('sales', [SaleController::class, 'store']);
+    Route::get('sales/{sale}', [SaleController::class, 'show']);
 });

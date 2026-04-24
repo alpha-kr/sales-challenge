@@ -2,8 +2,11 @@ export interface SaleDetail {
   id: number
   product_id: number | null
   service_id: number | null
+  product_name?: string | null
+  service_name?: string | null
   quantity: number
   unit_price: number
+  subtotal: number
 }
 
 export interface Sale {

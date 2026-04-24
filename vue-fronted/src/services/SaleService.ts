@@ -21,6 +21,11 @@ export class SaleService {
     return { data: data.data, meta: data.meta as PaginationMeta }
   }
 
+  async getOne(id: number): Promise<Sale> {
+    const { data } = await apiClient.get<ApiSuccessResponse<Sale>>(`/sales/${id}`)
+    return data.data
+  }
+
   async create(payload: CreateSalePayload): Promise<Sale> {
     const { data } = await apiClient.post<ApiSuccessResponse<Sale>>('/sales', payload)
     return data.data

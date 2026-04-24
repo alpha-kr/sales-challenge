@@ -34,11 +34,12 @@ import {
 } from '@/components/ui/table'
 import SkeletonTable from '@/components/base/SkeletonTable.vue'
 import { ArrowLeft, ChevronsUpDown, Check, Minus, Plus, Trash2 } from 'lucide-vue-next'
+import ApiErrorDialog from '@/components/base/ApiErrorDialog.vue'
 
 const router = useRouter()
 const cart = useSaleCartStore()
 const ui = useUiStore()
-const { handleApiError } = useValidationErrors()
+const { handleApiError, closeErrorDialog, errorDialog } = useValidationErrors()
 
 const clients = ref<Client[]>([])
 const products = ref<Product[]>([])
@@ -422,4 +423,8 @@ onMounted(loadData)
 
     </div>
   </div>
+    <ApiErrorDialog
+    :errorDialog="errorDialog"
+    @close="closeErrorDialog"
+  />
 </template>

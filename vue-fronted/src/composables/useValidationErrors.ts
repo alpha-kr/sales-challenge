@@ -8,6 +8,7 @@ export function useValidationErrors() {
 
   const errorDialog = reactive({
     open: false,
+    code: '',
     message: '',
     details: {} as Record<string, string[]>,
   })
@@ -25,6 +26,7 @@ export function useValidationErrors() {
 
     if (data?.error?.code && data.error.details) {
       fieldErrors.value = data.error.details
+      errorDialog.code = data.error.code
       errorDialog.message = data.error.message
       errorDialog.details = data.error.details
       errorDialog.open = true

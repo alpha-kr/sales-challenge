@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Sales\Actions\ProcessSaleAction;
 use App\Domain\Sales\DTOs\CreateSaleData;
 use App\Domain\Sales\DTOs\ListSalesData;
+use App\Domain\Sales\Models\Sale;
 use App\Domain\Sales\QueryObjects\SaleListQuery;
 use App\Http\Resources\SaleResource;
 use App\Traits\ApiResponse;
@@ -19,6 +20,16 @@ class SaleController extends Controller
         return $this->success(
             data: SaleResource::collection($query($filters)->paginate($filters->per_page)),
             message: 'Sales retrieved successfully.'
+        );
+    }
+
+    public function show(Sale $sale): JsonResponse
+    {
+        $sale->load(['client', 'details.product', 'details.service']);
+
+        return $this->success(
+            data: new SaleResource($sale),
+            message: 'Sale retrieved successfully.'
         );
     }
 

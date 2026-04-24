@@ -194,9 +194,7 @@ onMounted(loadProducts)
   />
 
   <ApiErrorDialog
-    :open="errorDialog.open"
-    :message="errorDialog.message"
-    :details="errorDialog.details"
+    :errorDialog="errorDialog"
     @close="closeErrorDialog"
   />
 </template>

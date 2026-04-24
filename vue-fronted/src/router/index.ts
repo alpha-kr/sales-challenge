@@ -35,6 +35,11 @@ const router = createRouter({
           component: () => import('@/views/SaleFormView.vue'),
         },
         {
+          path: 'sales/:id',
+          name: 'sales-show',
+          component: () => import('@/views/SaleDetailView.vue'),
+        },
+        {
           path: 'clients',
           name: 'clients',
           component: () => import('@/views/ClientsView.vue'),
