@@ -22,7 +22,6 @@ services:
         volumes:
             - './laravel-backend:/var/www/html'
             - './vue-fronted:/var/www/frontend'
-            - '/var/www/frontend/node_modules'
         networks:
             - sail
         depends_on:

@@ -61,7 +61,6 @@ async function handleLogout(): Promise<void> {
           {{ link.name }}
         </RouterLink>
       </nav>
-
       <Separator />
 
       <div class="px-3 py-4">

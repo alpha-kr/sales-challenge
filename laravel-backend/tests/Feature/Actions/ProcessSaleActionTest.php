@@ -79,6 +79,22 @@ class ProcessSaleActionTest extends TestCase
         }
     }
 
+    public function test_rejects_product_when_quantity_exceeds_available_stock(): void
+    {
+        $client = ClientFactory::new()->create();
+        $product = ProductFactory::new()->create(['stock' => 2]);
+
+        try {
+            $this->action->execute(CreateSaleData::from([
+                'client_id' => $client->id,
+                'items' => [['product_id' => $product->id, 'service_id' => null, 'quantity' => 5]],
+            ]));
+            $this->fail('Expected DomainException was not thrown.');
+        } catch (DomainException $e) {
+            $this->assertEquals(ApiErrorCode::InsufficientStock, $e->errorCode);
+        }
+    }
+
     public function test_rejects_disabled_service(): void
     {
         $client = ClientFactory::new()->create();

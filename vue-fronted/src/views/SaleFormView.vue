@@ -65,9 +65,31 @@ function selectClient(client: Client): void {
   clientOpen.value = false
 }
 
+function isOutOfStock(product: Product): boolean {
+  return product.stock === 0 || cartQty(product.id, 'product') >= product.stock
+}
+
 function addProduct(product: Product): void {
-  if (product.stock === 0) return
+  if (isOutOfStock(product)) {
+    ui.toast.error('Cannot add more of this product, stock limit reached.')
+    return
+  }
+
   cart.addItem({ type: 'product', id: product.id, name: product.name, price: product.price })
+}
+
+function updateCartQuantity(itemId: number, itemType: 'product' | 'service', newQuantity: number): void {
+  if (itemType === 'product') {
+    const product = products.value.find((p) => p.id === itemId)
+    if (!product) return
+
+    if ((isOutOfStock(product))) {
+      ui.toast.error('Cannot add more of this product, stock limit reached.')
+      return
+    }
+  }
+
+  cart.updateQuantity(itemId, itemType, newQuantity)
 }
 
 function addService(service: Service): void {
@@ -154,7 +176,7 @@ onMounted(loadData)
                   :style="{ width: 'var(--reka-popover-trigger-width)' }"
                 >
                   <Command>
-                    <CommandInput placeholder="Search client by name or tax ID..." />
+                    <CommandInput  placeholder="Search client by name or tax ID..." />
                     <CommandList>
                       <CommandEmpty>No client found.</CommandEmpty>
                       <CommandGroup>
@@ -354,7 +376,7 @@ onMounted(loadData)
                     variant="ghost"
                     size="icon"
                     class="size-6"
-                    @click="cart.updateQuantity(item.id, item.type, item.quantity - 1)"
+                    @click="updateCartQuantity(item.id, item.type, item.quantity - 1)"
                   >
                     <Minus class="size-3" />
                   </Button>
@@ -363,7 +385,7 @@ onMounted(loadData)
                     variant="ghost"
                     size="icon"
                     class="size-6"
-                    @click="cart.updateQuantity(item.id, item.type, item.quantity + 1)"
+                    @click="updateCartQuantity(item.id, item.type, item.quantity + 1)"
                   >
                     <Plus class="size-3" />
                   </Button>

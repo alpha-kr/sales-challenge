@@ -92,6 +92,13 @@ class ProcessSaleAction
                 message: "Product {$item->product_id} is out of stock.",
             );
         }
+
+        if ($product->stock < $item->quantity) {
+            throw new DomainException(
+                errorCode: ApiErrorCode::InsufficientStock,
+                message: "Product {$item->product_id} has insufficient stock.",
+            );
+        }
     }
 
     /**

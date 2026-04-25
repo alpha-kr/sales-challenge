@@ -4,5 +4,7 @@ import { Toaster } from '@/components/ui/sonner'
 
 <template>
   <RouterView />
-  <Toaster rich-colors />
+  <Teleport to="body">
+    <Toaster rich-colors />
+  </Teleport>
 </template>
